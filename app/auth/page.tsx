@@ -3,25 +3,39 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { AuthCard } from '@/components/ui'
+import { SignInForm } from '@/components/auth/SignInForm'
+import { SignUpForm } from '@/components/auth/SignUpForm'
+import { ForgotPasswordForm } from '@/components/auth/ForgotPasswordForm'
 
 export default function AuthPage() {
   const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isSignUp, setIsSignUp] = useState(false)
+  const [isForgotPassword, setIsForgotPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [message, setMessage] = useState('')
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError('')
+    setMessage('')
 
     try {
-      if (isSignUp) {
+      if (isForgotPassword) {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: `${window.location.origin}/auth/reset`,
+        })
+        if (error) throw error
+        setMessage('Check your email for a password reset link')
+        setEmail('')
+      } else if (isSignUp) {
         const { error } = await supabase.auth.signUp({ email, password })
         if (error) throw error
-        setError('Check your email to confirm your account')
+        setMessage('Check your email to confirm your account')
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password })
         if (error) throw error
@@ -35,56 +49,44 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl mb-2">🐰</h1>
-          <h2 className="text-3xl font-bold">Habit Rabbit</h2>
-        </div>
-
-        <form onSubmit={handleAuth} className="space-y-4 bg-white p-8 rounded-lg shadow">
-          <div>
-            <label className="block text-sm font-medium mb-2">Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-2">Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-              required
-            />
-          </div>
-
-          {error && <div className="text-red-600 text-sm">{error}</div>}
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-green-600 text-white py-2 rounded-lg font-semibold hover:bg-green-700 disabled:opacity-50"
-          >
-            {loading ? 'Loading...' : isSignUp ? 'Sign Up' : 'Sign In'}
-          </button>
-        </form>
-
-        <div className="text-center mt-4">
-          <button
-            onClick={() => setIsSignUp(!isSignUp)}
-            className="text-sm text-gray-600 hover:text-gray-900"
-          >
-            {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
-          </button>
-        </div>
-      </div>
-    </div>
+    <AuthCard>
+      <form onSubmit={handleAuth} className="space-y-4">
+        {isForgotPassword ? (
+          <ForgotPasswordForm
+            email={email}
+            setEmail={setEmail}
+            loading={loading}
+            error={error}
+            message={message}
+            onSubmit={handleAuth}
+            onBack={() => setIsForgotPassword(false)}
+          />
+        ) : isSignUp ? (
+          <SignUpForm
+            email={email}
+            setEmail={setEmail}
+            password={password}
+            setPassword={setPassword}
+            loading={loading}
+            error={error}
+            message={message}
+            onSubmit={handleAuth}
+            onSwitchToSignIn={() => setIsSignUp(false)}
+          />
+        ) : (
+          <SignInForm
+            email={email}
+            setEmail={setEmail}
+            password={password}
+            setPassword={setPassword}
+            loading={loading}
+            error={error}
+            onSubmit={handleAuth}
+            onForgotPassword={() => setIsForgotPassword(true)}
+            onSwitchToSignUp={() => setIsSignUp(true)}
+          />
+        )}
+      </form>
+    </AuthCard>
   )
 }
