@@ -24,22 +24,45 @@ interface HabitCardProps {
   onSkip: (habitId: string) => void
   onUnskip: (habitId: string) => void
   onDelete: (habitId: string) => void
+  onDetailClick: (habit: Habit) => void
   canSkip: boolean
 }
 
-export function HabitCard({ habit, isDone, isCheatDay, isSkipped, streak, weekLogs, todayIndex, onToggle, onSkip, onUnskip, onDelete, canSkip }: HabitCardProps) {
+export function HabitCard({ habit, isDone, isCheatDay, isSkipped, streak, weekLogs, todayIndex, onToggle, onSkip, onUnskip, onDelete, onDetailClick, canSkip }: HabitCardProps) {
   const [swipeOffset, setSwipeOffset] = useState(0)
   const [startX, setStartX] = useState(0)
+  const [startY, setStartY] = useState(0)
+  const [isHorizontalScroll, setIsHorizontalScroll] = useState(false)
   const cardRef = useRef<HTMLDivElement>(null)
 
   const handleTouchStart = (e: React.TouchEvent) => {
     setStartX(e.touches[0].clientX)
+    setStartY(e.touches[0].clientY)
+    setIsHorizontalScroll(false)
   }
 
   const handleTouchMove = (e: React.TouchEvent) => {
     const currentX = e.touches[0].clientX
-    const diff = currentX - startX
-    setSwipeOffset(Math.max(Math.min(diff, 0), -80))
+    const currentY = e.touches[0].clientY
+    const diffX = Math.abs(currentX - startX)
+    const diffY = Math.abs(currentY - startY)
+
+    // Only treat as horizontal swipe if X movement > Y movement
+    if (!isHorizontalScroll) {
+      if (diffX > diffY && diffX > 10) {
+        setIsHorizontalScroll(true)
+        e.preventDefault()
+      } else if (diffY > diffX && diffY > 10) {
+        // It's a vertical scroll, don't prevent default
+        return
+      }
+    }
+
+    if (isHorizontalScroll) {
+      e.preventDefault()
+      const diff = currentX - startX
+      setSwipeOffset(Math.max(Math.min(diff, 0), -80))
+    }
   }
 
   const handleTouchEnd = () => {
@@ -82,26 +105,30 @@ export function HabitCard({ habit, isDone, isCheatDay, isSkipped, streak, weekLo
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
-      <div className="flex items-center gap-3 mb-3">
+      {/* Card Header — icon, name/streak, action buttons */}
+      <div className="flex items-center gap-3 mb-3 cursor-pointer" onClick={() => onDetailClick(habit)}>
+        {/* Icon Swatch */}
         <div className="w-10 h-10 rounded-lg flex items-center justify-center text-lg" style={{ background: COLORS[habit.color_idx || 0] }}>
           {habit.icon}
         </div>
+        {/* Name & Streak */}
         <div className="flex-1">
           <div className="font-semibold dark:text-gray-100">{habit.name}</div>
           <div className="text-sm text-gray-600 dark:text-gray-400">
             {streak > 0 ? `🔥 ${streak}-day streak` : 'Start today!'}
           </div>
         </div>
+        {/* Action Buttons — toggle done + skip */}
         <div className="flex gap-1">
           <button
-            onClick={() => onToggle(habit.id)}
+            onClick={(e) => { e.stopPropagation(); onToggle(habit.id) }}
             disabled={isSkipped}
             className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-colors ${
               isDone && !isSkipped ? 'text-white' : 'border-gray-300 text-gray-400'
             } ${isSkipped ? 'opacity-50 cursor-not-allowed' : ''}`}
             style={{
-              background: isCheatDay ? '#FBBF24' : (isDone && !isSkipped ? '#1D9E75' : 'transparent'),
-              borderColor: isCheatDay ? '#FBBF24' : (isDone && !isSkipped ? '#1D9E75' : 'currentColor'),
+              background: isCheatDay ? '#F0B429' : (isDone && !isSkipped ? '#1D9E75' : 'transparent'),
+              borderColor: isCheatDay ? '#F0B429' : (isDone && !isSkipped ? '#1D9E75' : 'currentColor'),
             }}
           >
             {isDone && !isSkipped ? (
@@ -114,7 +141,7 @@ export function HabitCard({ habit, isDone, isCheatDay, isSkipped, streak, weekLo
           </button>
           {(!isDone || isSkipped) && (
             <button
-              onClick={() => isSkipped ? onUnskip(habit.id) : onSkip(habit.id)}
+              onClick={(e) => { e.stopPropagation(); isSkipped ? onUnskip(habit.id) : onSkip(habit.id) }}
               disabled={!isSkipped && !canSkip}
               className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-colors ${
                 isSkipped ? 'text-white' : 'border-gray-300 text-gray-400'
@@ -125,11 +152,12 @@ export function HabitCard({ habit, isDone, isCheatDay, isSkipped, streak, weekLo
               }}
               title={isSkipped ? 'Unskip habit' : canSkip ? 'Skip habit' : 'No skip habits remaining'}
             >
-              <span className="text-white text-sm">⊘</span>
+              <span className={`text-sm ${isSkipped ? 'text-white' : 'text-gray-400'}`}>⊘</span>
             </button>
           )}
         </div>
       </div>
+      {/* Week Progress Bar — one segment per day of the week */}
       <div className="flex gap-1">
         {weekLogs.map((isLogged, i) => {
           const isToday = i === todayIndex
@@ -140,8 +168,7 @@ export function HabitCard({ habit, isDone, isCheatDay, isSkipped, streak, weekLo
               key={i}
               className={`flex-1 h-1 rounded-full ${isLogged ? '' : 'bg-gray-200'} ${i === weekLogs.length - 1 ? 'ring-1' : ''}`}
               style={{
-                background: isTodayCheatDay ? '#FBBF24' : isTodaySkipped ? '#9CA3AF' : (isLogged ? '#1D9E75' : 'currentColor'),
-                ringColor: i === weekLogs.length - 1 ? (isTodayCheatDay ? '#FBBF24' : isTodaySkipped ? '#9CA3AF' : '#1D9E75') : 'transparent',
+                background: isTodayCheatDay ? '#F0B429' : isTodaySkipped ? '#9CA3AF' : (isLogged ? '#1D9E75' : 'currentColor'),
               }}
             ></div>
           )

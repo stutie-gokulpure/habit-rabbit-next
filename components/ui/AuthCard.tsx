@@ -4,7 +4,9 @@ export function AuthCard({ children }: { children: React.ReactNode }) {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className="text-4xl mb-2">🐰</h1>
-          <h2 className="text-3xl font-bold dark:text-gray-100">Habit Rabbit</h2>
+          <h2 className="text-3xl font-bold dark:text-gray-100">
+            Habit <span style={{ color: '#1D9E75' }}>Rabbit</span>
+          </h2>
         </div>
         {children}
       </div>

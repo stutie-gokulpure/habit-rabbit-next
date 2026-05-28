@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { AddHabitModal } from '@/components/habits/AddHabitModal'
+import { BottomNavBar } from '@/components/layout/BottomNavBar'
 
 const ICONS = ['🏃','🧘','💪','📚','💧','🥗','😴','✍️','🎸','🧠','🌿','🧹','💊','🚴','🧗','🏊','🎨','☕','🍎','🌅','🦷','🎯','🏋️','🧃','🧺']
 const COLORS = ['#E1F5EE','#E6F1FB','#FAEEDA','#FAECE7','#FBEAF0','#EAF3DE']
@@ -29,6 +31,7 @@ export default function AppPage() {
   const [newHabitName, setNewHabitName] = useState('')
   const [selectedIcon, setSelectedIcon] = useState(ICONS[0])
   const [showIconModal, setShowIconModal] = useState(false)
+  const [showAddModal, setShowAddModal] = useState(false)
   const [loading, setLoading] = useState(true)
   const [isAdding, setIsAdding] = useState(false)
 
@@ -184,7 +187,13 @@ export default function AppPage() {
       alert('Please enter a habit name')
       return
     }
+    setShowAddModal(false)
     setShowIconModal(true)
+  }
+
+  const openAddHabitModal = () => {
+    setNewHabitName('')
+    setShowAddModal(true)
   }
 
   const addHabit = async () => {
@@ -342,26 +351,20 @@ export default function AppPage() {
           )}
         </div>
 
-        {/* Add Habit Input */}
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 z-10">
-          <div className="max-w-2xl mx-auto flex gap-3">
-            <input
-              type="text"
-              placeholder="New habit…"
-              value={newHabitName}
-              onChange={(e) => setNewHabitName(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleAddClick()}
-              maxLength={40}
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-600"
-            />
-            <button
-              onClick={handleAddClick}
-              className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-semibold"
-            >
-              + Add
-            </button>
-          </div>
-        </div>
+        {/* Add Habit Modal (opened from BottomNavBar) */}
+        <AddHabitModal
+          isOpen={showAddModal}
+          habitName={newHabitName}
+          setHabitName={setNewHabitName}
+          onAddClick={handleAddClick}
+          onClose={() => setShowAddModal(false)}
+        />
+
+        {/* Bottom Navigation */}
+        <BottomNavBar
+          userEmail={user?.email}
+          onLogout={handleLogout}
+        />
 
         {/* Icon Modal */}
         {showIconModal && (

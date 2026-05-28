@@ -39,7 +39,7 @@ export default function AuthPage() {
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password })
         if (error) throw error
-        router.push('/app')
+        router.push('/')
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Auth failed')
@@ -50,43 +50,41 @@ export default function AuthPage() {
 
   return (
     <AuthCard>
-      <form onSubmit={handleAuth} className="space-y-4">
-        {isForgotPassword ? (
-          <ForgotPasswordForm
-            email={email}
-            setEmail={setEmail}
-            loading={loading}
-            error={error}
-            message={message}
-            onSubmit={handleAuth}
-            onBack={() => setIsForgotPassword(false)}
-          />
-        ) : isSignUp ? (
-          <SignUpForm
-            email={email}
-            setEmail={setEmail}
-            password={password}
-            setPassword={setPassword}
-            loading={loading}
-            error={error}
-            message={message}
-            onSubmit={handleAuth}
-            onSwitchToSignIn={() => setIsSignUp(false)}
-          />
-        ) : (
-          <SignInForm
-            email={email}
-            setEmail={setEmail}
-            password={password}
-            setPassword={setPassword}
-            loading={loading}
-            error={error}
-            onSubmit={handleAuth}
-            onForgotPassword={() => setIsForgotPassword(true)}
-            onSwitchToSignUp={() => setIsSignUp(true)}
-          />
-        )}
-      </form>
+      {isForgotPassword ? (
+        <ForgotPasswordForm
+          email={email}
+          setEmail={setEmail}
+          loading={loading}
+          error={error}
+          message={message}
+          onSubmit={handleAuth}
+          onBack={() => setIsForgotPassword(false)}
+        />
+      ) : isSignUp ? (
+        <SignUpForm
+          email={email}
+          setEmail={setEmail}
+          password={password}
+          setPassword={setPassword}
+          loading={loading}
+          error={error}
+          message={message}
+          onSubmit={handleAuth}
+          onSwitchToSignIn={() => setIsSignUp(false)}
+        />
+      ) : (
+        <SignInForm
+          email={email}
+          setEmail={setEmail}
+          password={password}
+          setPassword={setPassword}
+          loading={loading}
+          error={error}
+          onSubmit={handleAuth}
+          onForgotPassword={() => setIsForgotPassword(true)}
+          onSwitchToSignUp={() => setIsSignUp(true)}
+        />
+      )}
     </AuthCard>
   )
 }

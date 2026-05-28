@@ -3,15 +3,31 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
+import { usePreferences } from '@/context/PreferencesContext'
 
 interface BottomNavBarProps {
   userEmail?: string
-  onAddHabitClick: () => void
+  onAddHabitClick?: () => void
   onLogout: () => void
-  onProgressClick?: () => void
+  onCheatDayClick?: () => void
+  isTodayCheatDay?: boolean
+  cheatDaysRemaining?: number
 }
 
-export function BottomNavBar({ userEmail, onAddHabitClick, onLogout, onProgressClick }: BottomNavBarProps) {
+export function BottomNavBar({
+  userEmail,
+  onAddHabitClick,
+  onLogout,
+  onCheatDayClick,
+  isTodayCheatDay,
+  cheatDaysRemaining,
+}: BottomNavBarProps) {
+  const showCheatDayButton =
+    onCheatDayClick !== undefined &&
+    (isTodayCheatDay || (cheatDaysRemaining ?? 0) > 0)
+
+  const { animationsEnabled, setAnimationsEnabled } = usePreferences()
+
   const [showSettings, setShowSettings] = useState(false)
   const [showWeekDayMenu, setShowWeekDayMenu] = useState(false)
   const [weekStartDay, setWeekStartDay] = useState<string>('Sunday')
@@ -41,14 +57,14 @@ export function BottomNavBar({ userEmail, onAddHabitClick, onLogout, onProgressC
     <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 px-4 py-4 z-20">
       <div className="max-w-2xl mx-auto flex items-center justify-around gap-2">
         {/* Profile Button */}
-        <Link
+        {/* <Link
           href="/profile"
           className="w-10 h-10 rounded-full flex items-center justify-center text-white text-xs font-semibold transition-opacity hover:opacity-80"
           style={{ background: '#1D9E75' }}
           title={userEmail}
         >
           {userEmail ? userEmail.charAt(0).toUpperCase() : 'U'}
-        </Link>
+        </Link> */}
 
         {/* Home Button */}
         <Link
@@ -62,25 +78,39 @@ export function BottomNavBar({ userEmail, onAddHabitClick, onLogout, onProgressC
           </svg>
         </Link>
 
-        {/* Add Habit Button */}
-        <button
-          onClick={onAddHabitClick}
-          className="w-10 h-10 rounded-full flex items-center justify-center text-white text-2xl font-light leading-none transition-transform hover:scale-110 active:scale-95"
-          style={{ background: '#1D9E75' }}
-          title="Add habit"
-        >
-          +
-        </button>
-
         {/* Progress Button */}
-        <button
-          onClick={onProgressClick}
+        <Link
+          href="/progress"
           className="w-10 h-10 rounded-full flex items-center justify-center text-white text-lg transition-opacity hover:opacity-80"
           style={{ background: '#1D9E75' }}
           title="Week progress"
         >
           🥕
-        </button>
+        </Link>
+
+        {/* Add Habit Button — only when caller provides a handler (home screen) */}
+        {onAddHabitClick && (
+          <button
+            onClick={onAddHabitClick}
+            className="w-10 h-10 rounded-full flex items-center justify-center text-white text-2xl font-light leading-none transition-transform hover:scale-110 active:scale-95"
+            style={{ background: '#1D9E75' }}
+            title="Add habit"
+          >
+            +
+          </button>
+        )}
+
+        {/* Cheat Day Button */}
+        {showCheatDayButton && (
+          <button
+            onClick={onCheatDayClick}
+            className="w-10 h-10 rounded-full flex items-center justify-center text-white text-lg transition-opacity hover:opacity-80"
+            style={{ background: isTodayCheatDay ? '#F0B429' : '#1D9E75' }}
+            title={isTodayCheatDay ? 'Cheat day active — click to unmark' : 'Mark today as cheat day'}
+          >
+            ★
+          </button>
+        )}
 
         {/* Settings Button */}
         <div className="relative">
@@ -136,6 +166,23 @@ export function BottomNavBar({ userEmail, onAddHabitClick, onLogout, onProgressC
                   </div>
                 )}
               </div>
+
+              {/* Animations Toggle */}
+              <button
+                onClick={() => setAnimationsEnabled(!animationsEnabled)}
+                className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center justify-between border-t border-gray-200 dark:border-gray-700"
+              >
+                Animations
+                <span
+                  className={`text-xs font-semibold ${
+                    animationsEnabled
+                      ? 'text-green-700 dark:text-green-400'
+                      : 'text-gray-400 dark:text-gray-500'
+                  }`}
+                >
+                  {animationsEnabled ? 'On' : 'Off'}
+                </span>
+              </button>
 
               <button
                 onClick={() => {

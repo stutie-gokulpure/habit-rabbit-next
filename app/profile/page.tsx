@@ -4,12 +4,15 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { FormInput, FormButton } from '@/components/ui'
+import { InfoTooltip } from '@/components/ui/InfoTooltip'
 import { useTheme } from '@/context/ThemeContext'
+import { useHabitData } from '@/context/HabitDataContext'
 import { BottomNavBar } from '@/components/layout/BottomNavBar'
 
 export default function ProfilePage() {
   const router = useRouter()
   const { theme, setTheme } = useTheme()
+  const { refresh: refreshHabitData } = useHabitData()
   const [user, setUser] = useState<any>(null)
   const [displayName, setDisplayName] = useState('')
   const [avatarUrl, setAvatarUrl] = useState('')
@@ -198,6 +201,7 @@ export default function ProfilePage() {
       setSavedCheatDaysPeriod(cheatDaysPeriod)
       setHasUnsavedCheatDays(false)
       setCheatDaysMessage('Cheat days settings updated successfully!')
+      await refreshHabitData()
     } catch (err) {
       setCheatDaysMessage(err instanceof Error ? err.message : 'Failed to save cheat days settings')
     } finally {
@@ -222,6 +226,7 @@ export default function ProfilePage() {
       setSavedSkipHabitsPeriod(skipHabitsPeriod)
       setHasUnsavedSkipHabits(false)
       setSkipHabitsMessage('Skip habits settings updated successfully!')
+      await refreshHabitData()
     } catch (err) {
       setSkipHabitsMessage(err instanceof Error ? err.message : 'Failed to save skip habits settings')
     } finally {
@@ -335,7 +340,6 @@ export default function ProfilePage() {
               </button>
             </div>
             <FormInput
-              label="Display Name"
               type="text"
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
@@ -351,7 +355,10 @@ export default function ProfilePage() {
           {/* Cheat Days Section */}
           <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold dark:text-gray-100">Cheat Days</h2>
+              <div className="flex items-center gap-2">
+                <h2 className="text-xl font-semibold dark:text-gray-100">Cheat Days</h2>
+                <InfoTooltip text="Skip days while maintaining your streak" />
+              </div>
               <button
                 onClick={saveCheatDays}
                 disabled={savingCheatDays}
@@ -363,12 +370,11 @@ export default function ProfilePage() {
                 </svg>
               </button>
             </div>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">Skip days while maintaining your streak</p>
 
             <div className="space-y-4">
               {/* Number of cheat days */}
               <div>
-                <label className="block text-sm font-medium mb-2 dark:text-gray-100">Number of Cheat Days</label>
+                {/* <label className="block text-sm font-medium mb-2 dark:text-gray-100">Number of Cheat Days</label> */}
                 <input
                   type="number"
                   min="1"
@@ -395,7 +401,7 @@ export default function ProfilePage() {
                       key={period}
                       type="button"
                       onClick={() => setCheatDaysPeriod(period)}
-                      className={`px-6 py-2 rounded-lg font-semibold transition-all capitalize ${
+                      className={`flex-1 px-4 py-2 rounded-lg font-semibold transition-all capitalize ${
                         cheatDaysPeriod === period
                           ? 'text-white'
                           : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
@@ -418,7 +424,10 @@ export default function ProfilePage() {
           {/* Skip Habits Section */}
           <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold dark:text-gray-100">Skip Habits</h2>
+              <div className="flex items-center gap-2">
+                <h2 className="text-xl font-semibold dark:text-gray-100">Skip Habits</h2>
+                <InfoTooltip text="Skip individual habits while maintaining your streak" />
+              </div>
               <button
                 onClick={saveSkipHabits}
                 disabled={savingSkipHabits}
@@ -430,12 +439,11 @@ export default function ProfilePage() {
                 </svg>
               </button>
             </div>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">Skip individual habits while maintaining your streak</p>
 
             <div className="space-y-4">
               {/* Number of skip habits */}
               <div>
-                <label className="block text-sm font-medium mb-2 dark:text-gray-100">Number of Habits to Skip</label>
+                {/* <label className="block text-sm font-medium mb-2 dark:text-gray-100">Number of Habits to Skip</label> */}
                 <input
                   type="number"
                   min="1"
@@ -462,7 +470,7 @@ export default function ProfilePage() {
                       key={period}
                       type="button"
                       onClick={() => setSkipHabitsPeriod(period)}
-                      className={`px-6 py-2 rounded-lg font-semibold transition-all capitalize ${
+                      className={`flex-1 px-4 py-2 rounded-lg font-semibold transition-all capitalize ${
                         skipHabitsPeriod === period
                           ? 'text-white'
                           : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
@@ -491,7 +499,7 @@ export default function ProfilePage() {
                   key={mode}
                   type="button"
                   onClick={() => setTheme(mode)}
-                  className={`px-6 py-2 rounded-lg font-semibold transition-all capitalize ${
+                  className={`flex-1 px-4 py-2 rounded-lg font-semibold transition-all capitalize ${
                     theme === mode
                       ? 'text-white dark:text-white'
                       : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
@@ -537,21 +545,12 @@ export default function ProfilePage() {
               )}
             </form>
           </div>
-
-          {/* Back Link */}
-          <button
-            onClick={() => router.back()}
-            className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
-          >
-            ← Back
-          </button>
         </div>
       </div>
 
       {/* Bottom Navigation */}
       <BottomNavBar
         userEmail={user?.email}
-        onAddHabitClick={() => {}}
         onLogout={async () => {
           await supabase.auth.signOut()
           router.push('/auth')

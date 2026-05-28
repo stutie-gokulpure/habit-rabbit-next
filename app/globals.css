@@ -1,9 +1,21 @@
 @import "tailwindcss";
 
-@variant dark (&:where(.dark *));
+@custom-variant dark (&:where(.dark, .dark *));
 
 :root {
   --color-brand: #1D9E75;
+}
+
+html {
+  scroll-behavior: smooth;
+  touch-action: auto;
+}
+
+body {
+  min-height: 100vh;
+  touch-action: auto;
+  -webkit-user-select: text;
+  user-select: text;
 }
 
 body {
