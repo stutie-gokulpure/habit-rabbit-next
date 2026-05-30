@@ -218,7 +218,7 @@ export function HabitDataProvider({ children }: { children: ReactNode }) {
         supabase.from('habits').select('*').eq('user_id', session.user.id),
         supabase.from('habit_logs').select('*').eq('user_id', session.user.id),
         supabase.from('carrots').select('week_key').eq('user_id', session.user.id),
-        supabase.from('cheat_day_usage').select('date_used').eq('user_id', session.user.id),
+        supabase.from('cheat_days_usage').select('used_date').eq('user_id', session.user.id),
         supabase.from('skipped_habits').select('*').eq('user_id', session.user.id),
       ])
 
@@ -236,7 +236,7 @@ export function HabitDataProvider({ children }: { children: ReactNode }) {
       const currentCarrots = carrotsRes.data ?? []
       const fetchedHabits = (habitsRes.data ?? []) as Habit[]
       const fetchedLogs = (logsRes.data ?? []) as HabitLog[]
-      const cheatDates = new Set((cheatDaysRes.data ?? []).map(c => c.date_used))
+      const cheatDates = new Set((cheatDaysRes.data ?? []).map(c => c.used_date))
 
       const weekComplete =
         fetchedHabits.length > 0 &&
@@ -254,7 +254,7 @@ export function HabitDataProvider({ children }: { children: ReactNode }) {
       setHabits(fetchedHabits)
       setLogs(fetchedLogs)
       setCarrots(currentCarrots.map(c => c.week_key))
-      setCheatDayUsage((cheatDaysRes.data ?? []).map(c => c.date_used))
+      setCheatDayUsage((cheatDaysRes.data ?? []).map(c => c.used_date))
       setSkippedHabits((skippedRes.data ?? []) as SkippedHabit[])
 
       setWeekStartDay(session.user.user_metadata?.week_start_day || 'Sunday')
@@ -264,7 +264,7 @@ export function HabitDataProvider({ children }: { children: ReactNode }) {
       setSkipHabitsPeriod((session.user.user_metadata?.skip_habits_period as 'daily' | 'weekly' | 'monthly') || 'daily')
 
       const today = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}`
-      setIsTodayCheatDay((cheatDaysRes.data ?? []).some(c => c.date_used === today))
+      setIsTodayCheatDay((cheatDaysRes.data ?? []).some(c => c.used_date === today))
     } catch (err) {
       console.error('Load error:', err)
     } finally {
@@ -368,28 +368,28 @@ export function HabitDataProvider({ children }: { children: ReactNode }) {
   const markTodayAsCheatDay = async () => {
     if (!user || getCheatDaysRemaining() <= 0) return
     const today = todayKey()
-    try {
-      await supabase.from('cheat_day_usage').insert({
-        user_id: user.id,
-        date_used: today,
-      })
-      setCheatDayUsage([...cheatDayUsage, today])
-      setIsTodayCheatDay(true)
-    } catch (err) {
-      console.error('Error marking cheat day:', err)
+    const { error } = await supabase.from('cheat_days_usage').upsert(
+      { user_id: user.id, used_date: today },
+      { onConflict: 'user_id,used_date', ignoreDuplicates: true }
+    )
+    if (error) {
+      console.error('Error marking cheat day:', error.message)
+      return
     }
+    setCheatDayUsage([...cheatDayUsage, today])
+    setIsTodayCheatDay(true)
   }
 
   const unmarkTodayAsCheatDay = async () => {
     if (!user) return
     const today = todayKey()
-    try {
-      await supabase.from('cheat_day_usage').delete().eq('user_id', user.id).eq('date_used', today)
-      setCheatDayUsage(cheatDayUsage.filter(date => date !== today))
-      setIsTodayCheatDay(false)
-    } catch (err) {
-      console.error('Error unmarking cheat day:', err)
+    const { error } = await supabase.from('cheat_days_usage').delete().eq('user_id', user.id).eq('used_date', today)
+    if (error) {
+      console.error('Error unmarking cheat day:', error)
+      return
     }
+    setCheatDayUsage(cheatDayUsage.filter(date => date !== today))
+    setIsTodayCheatDay(false)
   }
 
   const skipHabit = async (habitId: string, date: string) => {

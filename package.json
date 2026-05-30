@@ -23,7 +23,7 @@
     "@types/react-dom": "^19",
     "autoprefixer": "^10",
     "postcss": "^8",
-    "tailwindcss": "^4",
+    "tailwindcss": "^4.3.0",
     "typescript": "^5"
   }
 }
