@@ -8,9 +8,17 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "build:ios": "npm run build && npx cap copy ios && npx cap sync ios",
+    "open:ios": "npx cap open ios",
+    "build:android": "npm run build && npx cap copy android && npx cap sync android",
+    "open:android": "npx cap open android"
   },
   "dependencies": {
+    "@capacitor/android": "^8.3.4",
+    "@capacitor/cli": "^7.6.5",
+    "@capacitor/core": "^8.3.4",
+    "@capacitor/ios": "^8.3.4",
     "@supabase/supabase-js": "^2.105.4",
     "next": "^16.2.6",
     "react": "19.2.4",

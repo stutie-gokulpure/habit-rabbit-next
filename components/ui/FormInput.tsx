@@ -11,7 +11,7 @@ export function FormInput({ label, type, value, onChange, required = true, label
   return (
     <div>
       {label && (
-        <label className={labelClassName || 'block text-sm font-medium mb-2 text-gray-900 dark:text-gray-100'}>{label}</label>
+        <label className={labelClassName || 'block text-sm font-medium mb-2 text-gray-900'}>{label}</label>
       )}
       <input
         type={type}
